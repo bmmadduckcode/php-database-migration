@@ -69,7 +69,7 @@ class AddEnvCommand extends AbstractEnvCommand
             );
     }
 
-    protected function execute(InputInterface $input)
+    protected function execute(InputInterface $input, OutputInterface $output)
     {
         $format = $input->getArgument('format');
         $envName = $input->getArgument('envname');
