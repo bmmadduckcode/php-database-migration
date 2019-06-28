@@ -69,10 +69,11 @@ Adding an environment
 The first thing to do before playing with SQL migrations is to add an environment, let's add the dev one.
 
 ```
-$ ./bin/migrate migrate:addenv
+$ ./bin/migrate migrate:addenv [envname] [driver] [dbname] [dbhost] [dbport] [dbusername] [dbpassword] [format] [dbcharset] [changelogtable] [defaulteditor]
+
 ```
 
-You will be prompted to answer a series of questions about your environment, and then a config file will be saved
+Created config file will be saved
 in `./.php-database-migration/environments/[env].yml`.
 
 Initialization

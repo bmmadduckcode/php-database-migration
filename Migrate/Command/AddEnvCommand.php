@@ -23,15 +23,66 @@ class AddEnvCommand extends AbstractEnvCommand
             ->setName('migrate:addenv')
             ->setDescription('Initialise an environment to work with php db migrate')
             ->addArgument(
+                'envname',
+                InputArgument::REQUIRED,
+                'Name of the new environment, default: dev'
+            )->addArgument(
+                'driver',
+                InputArgument::REQUIRED,
+                'PDO driver'
+            )->addArgument(
+                'dbname',
+                InputArgument::REQUIRED,
+                'Database name (or the database file location)'
+            )->addArgument(
+                'dbhost',
+                InputArgument::REQUIRED,
+                'Database host'
+            )->addArgument(
+                'dbport',
+                InputArgument::REQUIRED,
+                'Database port'
+            )->addArgument(
+                'dbusername',
+                InputArgument::REQUIRED,
+                'Database username'
+            )->addArgument(
+                'dbpassword',
+                InputArgument::REQUIRED,
+                'Database password'
+            )->addArgument(
                 'format',
                 InputArgument::OPTIONAL,
                 'Environment file format: (yml, json or php), default: yml'
+            )->addArgument(
+                'dbcharset',
+                InputArgument::OPTIONAL,
+                'Database charset (if needed)'
+            )->addArgument(
+                'changelogtable',
+                InputArgument::OPTIONAL,
+                'Changelog table, default: changelog'
+            )->addArgument(
+                'defaulteditor',
+                InputArgument::OPTIONAL,
+                'Text editor to use by default, default: vim'
             );
     }
 
-    protected function execute(InputInterface $input, OutputInterface $output)
+    protected function execute(InputInterface $input)
     {
         $format = $input->getArgument('format');
+        $envName = $input->getArgument('envname');
+        $driver = $input->getArgument('driver');
+        $dbName = $input->getArgument('dbname');
+        $dbHost = $input->getArgument('dbhost');
+        $dbPort = $input->getArgument('dbport');
+        $dbUserName = $input->getArgument('dbusername');
+        $dbUserPassword = $input->getArgument('dbpassword');
+        $dbCharset = $input->getArgument('dbcharset');
+        $changelogTable = $input->getArgument('changelogtable');
+        $defaultEditor = $input->getArgument('defaulteditor');
+
         $supportedFormats = array_keys(ConfigLocator::$SUPPORTED_PARSERS);
 
         if (is_null($format)) {
@@ -57,49 +108,14 @@ class AddEnvCommand extends AbstractEnvCommand
 
         $drivers = pdo_drivers();
 
-        /* @var $questions QuestionHelper */
-        $questions = $this->getHelperSet()->get('question');
-
-        $envQuestion = new Question("Please enter the name of the new environment <info>(default dev)</info>: ", "dev");
-        $envName = $questions->ask($input, $output, $envQuestion);
+        if (!in_array($driver, $drivers)) {
+            throw new \RuntimeException(sprintf('Invalid driver format: %s', $driver));
+        }
 
         $envConfigFile = $this->getEnvironmentDir() . '/' . $envName . '.' . $format;
         if (file_exists($envConfigFile)) {
             throw new \InvalidArgumentException("environment [$envName] is already defined!");
         }
-
-        $driverQuestion = new ChoiceQuestion("Please chose your pdo driver", $drivers);
-        $driver = $questions->ask($input, $output, $driverQuestion);
-
-        $dbNameQuestion = new Question("Please enter the database name (or the database file location): ", "~");
-        $dbName = $questions->ask($input, $output, $dbNameQuestion);
-
-        $dbHostQuestion = new Question("Please enter the database host (if needed): ", "~");
-        $dbHost = $questions->ask($input, $output, $dbHostQuestion);
-
-        $dbPortQuestion = new Question("Please enter the database port (if needed): ", "~");
-        $dbPort = $questions->ask($input, $output, $dbPortQuestion);
-
-        $dbUserNameQuestion = new Question("Please enter the database user name (if needed): ", "~");
-        $dbUserName = $questions->ask($input, $output, $dbUserNameQuestion);
-
-        $dbUserPasswordQuestion = new Question("Please enter the database user password (if needed): ", "~");
-        $dbUserPassword = $questions->ask($input, $output, $dbUserPasswordQuestion);
-
-        $dbCharsetQuestion = new Question("Please enter the database charset (if needed): ", "~");
-        $dbCharset = $questions->ask($input, $output, $dbCharsetQuestion);
-
-        $changelogTableQuestion = new Question(
-            "Please enter the changelog table <info>(default changelog)</info>: ",
-            "changelog"
-        );
-        $changelogTable = $questions->ask($input, $output, $changelogTableQuestion);
-
-        $defaultEditorQuestion = new Question(
-            "Please enter the text editor to use by default <info>(default vim)</info>: ",
-            "vim"
-        );
-        $defaultEditor = $questions->ask($input, $output, $defaultEditorQuestion);
 
         $confTemplate = file_get_contents(__DIR__ . '/../../templates/env.' . $format . '.tpl');
         $confTemplate = str_replace('{DRIVER}', $driver, $confTemplate);
